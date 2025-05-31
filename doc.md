@@ -153,6 +153,28 @@ readelf -r libgot_lib.so | grep -e  R_X86_64_COPY -e rela.dyn
 readelf -r got_test | grep -e R_X86_64_COPY -e rela.dyn
 ```
 
+In many cases, this will **copy** the global data so that the shared library has a copy, as does the program.
+This is *bad* and I can't believe this is a default behavior.
+We should likely just ensure that data is never directly accessed from a client.
+But this is easier said than done as we have a lot of *inlined* functions that access library data.
+I don't have a good solution to this.
+
+The example we've created in this repo does *not* do this, though.
+It seems to, by default, make it so that the global data in the library uses the GOT to instead be placed in the binary.
+I *believe* this means that any non-`static` global variables in the library are, by default, placed in the executable.
+
+This is a pending question.
+Is a global, visible variable in a shared library always guaranteed to be placed in the program, or are there cases where multiple copies exist, or are there cases where it is kept in the shared library?
+I don't know.
+
+## Shared Libraries, `--gc-sections`, and Linker-script's `KEEP`
+
+Shared libraries can be compiled with linker scripts, and `--gc-sections` can be used just the same.
+However, the big question is how are the garbage-collection "roots" determined?
+With shared libraries, it seems to make a very conservative assumption that anything that *can* be accessed outside of the library, *will be*, thus must be a root.
+In other words, any symbols that are in the `.dynsym` and `.rela.dyn`/`.rel.dyn` sections will be considered roots.
+
+So, if we wanted to make this really work, we'd have to use `objcopy` to make most (all) symbols that aren't `KEEP` be private, then use our custom crafted linker script to use `KEEP` to define the roots, and GC from there.
 
 ## Useful references
 
