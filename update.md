@@ -82,7 +82,12 @@ In a shared library, a callee function marked as local can be inlined when build
 4. Local (hidden or static) functions or data will not appear in the GOT
 5. non referenced global functions in the shared library are not in the GOT or GOT.PLT when build with option "-fno-plt"(also not in got.plt) 
 
-###Binary file shrink
+###object file level
+1. hidden all the symbols then re-export with a version script 
+2. add keep list in the linker script
+3. rebuild the shared library 
+
+###elf file level 
 1. using objcopy --localize-symbol=* on shared library will set the symbol as local but will not impact the GOT 
 2. using objcopy --strip-symbol=* on shared library will remove the symbol but will not impact the GOT
 3. -Wl,--unique=.text.* -Wl,--unique=.data.* enable the elf file generated with seperate function and data sections, to remove section, we need to remove both .rela.text.* and .text.*, and also symbol *. 
